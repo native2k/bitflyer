@@ -8,6 +8,7 @@ import os,sys
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(current_dir,'.'))
 from bitflyer.utils import make_nonce
+from urllib.parse import urlencode, quote_plus
 
 """
 document: https://lightning.bitflyer.jp/docs?lang=ja
@@ -15,29 +16,36 @@ document: https://lightning.bitflyer.jp/docs?lang=ja
 
 
 class Private(object):
-    
+
     def __init__(self,
                  access_key=None,
                  secret_key=None):
         self.access_key     = access_key
         self.secret_key     = secret_key
-        self.url            = 'https://api.bitflyer.jp'
+        self.url           = 'https://api.bitflyer.com'
         self.timestamp      = make_nonce()
 
     def base_get(self,path=None,**kwargs):
         '''
         API base function
         '''
+        params = ''
+        if kwargs:
+            params = '?%s' % urlencode(kwargs, quote_via=quote_plus)
+
         timestamp = self.timestamp
-        uri = self.url + path
+        uri = self.url + path + params
         method = 'GET'
-        text = timestamp + method + path
+        text = timestamp + method + path + params
         sign = hmac.new(self.secret_key.encode('utf-8'), text.encode('utf-8'), hashlib.sha256).hexdigest()
-        headers = { 
+        headers = {
                     'ACCESS-KEY': self.access_key,
                     'ACCESS-TIMESTAMP':  timestamp,
                     'ACCESS-SIGN':  sign
                     }
+
+
+
         r = requests.get(uri,
                          headers = headers)
         if r.text:
@@ -99,11 +107,11 @@ class Private(object):
         parameters
             product_code     : str: (required) 'BTC_JPY' or 'FX_BTC_JPY'
             child_order_type : str
-            side             : str    
+            side             : str
             price            : int
             size             : float
-        see for more detail: 
-        https://lightning.bitflyer.jp/docs?lang=ja#新規注文を出す    
+        see for more detail:
+        https://lightning.bitflyer.jp/docs?lang=ja#新規注文を出す
         '''
         return self.base_post(path='/v1/me/sendchildorder',**kwargs)
 
@@ -119,7 +127,7 @@ class Private(object):
             child_order_id   :str: Order ID to be canceled.
             child_order_acceptance_id :str: Acceptance ID to be caneld.
 
-        see for more detail: 
+        see for more detail:
         https://lightning.bitflyer.jp/docs?lang=ja#注文をキャンセルする
         '''
         return self.base_post(path='/v1/me/cancelchildorder',**kwargs)
@@ -133,11 +141,11 @@ class Private(object):
 
         parameters
             product_code     :str: (required) 'BTC_JPY' or 'FX_BTC_JPY'
-        see for more detail: 
+        see for more detail:
         https://lightning.bitflyer.jp/docs?lang=ja#すべての注文をキャンセルする
         '''
         return self.base_post(path='/v1/me/cancelallchildorders',**kwargs)
-        
+
 
     def getchildorders(self,**kwargs):
         '''
@@ -181,10 +189,110 @@ class Private(object):
 
     def getpositions(self,**kwargs):
         '''
-        Get positions 
+        Get positions
 
         parameters
             None
 
         '''
         return self.base_get(path='/v1/me/getpositions',**kwargs)
+
+    def getpermissions(self,**kwargs):
+        '''
+        Get permissiions
+
+        parameters
+            None
+
+        '''
+        return self.base_get(path='/v1/me/getpermissions',**kwargs)
+
+    def gettradingcommission(self,product_code='BTC_JPY', **kwargs):
+        '''
+        Get traddingcommission
+
+        parameters
+            None
+
+        '''
+        return self.base_get(
+            path='/v1/me/gettradingcommission',
+            product_code=product_code,
+            **kwargs
+        )
+
+
+    def getbalancehistory(self, currency_code='JPY', count=100, before=0, after=0, **kwargs):
+        '''
+        Get balance history
+
+        parameters
+            None
+
+        '''
+        return self.base_get(
+            path='/v1/me/getbalancehistory',
+            currency_code=currency_code, count=count, before=before, after=after,
+            **kwargs
+        )
+
+
+    def getcollateralhistory(self,count=100, before=0, after=0, **kwargs):
+        '''
+        Get collateral  history
+
+        parameters
+            None
+
+        '''
+        return self.base_get(
+            path='/v1/me/getcollateralhistory',
+            count=count, before=before, after=after,
+            **kwargs
+        )
+
+    def getcoinins(self,count=100, before=0, after=0, **kwargs):
+        '''
+        Get coin ins
+
+        parameters
+            None
+
+        '''
+        return self.base_get(
+            path='/v1/me/getcoinins',
+            count=count, before=before, after=after,
+            **kwargs
+        )
+
+
+    def getcoinouts(self, count=100, before=0, after=0, **kwargs):
+        '''
+        Get coin outs
+
+        parameters
+            None
+
+        '''
+        return self.base_get(
+            path='/v1/me/getcoinouts',
+            count=count, before=before, after=after,
+            **kwargs
+        )
+
+
+
+    def getwithdrawals(self, count=100, before=0, after=0, message_id=None, **kwargs):
+        '''
+        Get withdrawals
+
+        parameters
+            None
+
+        '''
+        return self.base_get(
+            path='/v1/me/getwithdrawals',
+            count=count, before=before, after=after, message_id=message_id,
+            **kwargs
+        )
+
